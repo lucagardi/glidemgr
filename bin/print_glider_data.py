@@ -3,7 +3,6 @@ import json
 import numpy  as np
 import pandas as pd
 import matplotlib
-matplotlib.use('TkAgg')
 
 # Use TkAgg backend for matplotlib
 # This will make sure that charts are rendered properly on some systems
