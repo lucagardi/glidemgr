@@ -5,10 +5,12 @@ import pandas as pd
 import matplotlib
 matplotlib.use('TkAgg')
 
-import matplotlib.pyplot as plt
+# Use TkAgg backend for matplotlib
+# This will make sure that charts are rendered properly on some systems
+matplotlib.use('TkAgg')
 
+# Read the glider JSON data
 DATA_FILE = '../data/up_kibo_sm.json'
-
 glider_json         = json.load(open(DATA_FILE, 'r'))
 glider_measurements = glider_json['measurements']
 
