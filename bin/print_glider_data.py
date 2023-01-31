@@ -2,20 +2,15 @@
 import json
 import numpy  as np
 import pandas as pd
-import matplotlib.pyplot as plt
-import plotly.express as px
+import matplotlib
+matplotlib.use('TkAgg')
 
-def mirror(seq):
-    output = list(seq[::-1])
-    output.extend(seq[1:])
-    return output
-    
+import matplotlib.pyplot as plt
+
 DATA_FILE = '../data/up_kibo_sm.json'
 
 glider_json         = json.load(open(DATA_FILE, 'r'))
 glider_measurements = glider_json['measurements']
-# pretty-print the data 
-# print(json.dumps(glider_json, indent=4, sort_keys=True))
 
 # Define pandas data structure
 data = {'expected': {}, 'measured': {}}
@@ -55,45 +50,51 @@ for riser, riser_data in glider_measurements.items():
             data[side][riser].extend(data[side][riser][::-1])
 
 
-
-# Create a data frame         
+# Create a data frame
 df = pd.DataFrame(data)
-# Calculate diff
-df['diff'] = df.apply(lambda x: np.array(x['measured']) - \
-                                np.array(x['expected']), axis=1)
-# print(df)
 
-# print(df[['expected', 'measured']].values)
-max_len = max(len(row) for row in df['diff'].values)
+# Compute the difference between the measured and expected data
+df['diff'] = df.apply(lambda x: np.array(x['measured']) - np.array(x['expected']), axis=1)
 
-for riser, row in df['diff'].items():
-    diff_len = max_len - len(row)
-    print(diff_len, riser, row)
-    for i in range(0, diff_len//2):
-        print('insert in %s' % riser)
-        df['diff'][riser] = np.append(df['diff'][riser], 0)
-        df['diff'][riser] = np.insert(df['diff'][riser], 0, 0)
-    print(diff_len, riser, row)
+# Pad the data to ensure all rows have the same length
+for df_row in ['measured', 'diff', 'expected']:
+    # Find the longest row in the data frame
+    max_len = max(len(row) for row in df[df_row].values)
 
-print(df.values)
+    # Find the sum of all row lengths
+    sum_len = sum(len(row) for row in df[df_row].values)
 
-# import plotly.graph_objects as go
-# feature_x = np.arange(0, 50, 2)
-# feature_y = np.arange(0, 50, 3)
-  
-# # Creating 2-D grid of features
-# [X, Y] = np.meshgrid(feature_x, feature_y)
-  
-# Z = np.cos(X / 2) + np.sin(Y / 4)
-  
-# fig = go.Figure(data=go.Heatmap(
-#   x=feature_x, y=feature_y, z=Z,))
-  
-# fig.update_layout(
-#     margin=dict(t=200, r=200, b=200, l=200),
-#     showlegend=False,
-#     width=700, height=700,
-#     autosize=False)
-  
-  
-# fig.show()
+    # Find the average value of all elements
+    average = sum(sum(row) for row in df[df_row].values) / sum_len
+
+    # Choose the appropriate value to use when padding
+    rep_val = 0 if df_row == 'diff' else average
+
+    # Pad each row in the data frame
+    for riser, row in df[df_row].items():
+        # Calculate how much padding is necessary
+        diff_len = max_len - len(row)
+
+        # Append and/or insert padding elements as needed
+        for i in range(0, diff_len//2):
+            df[df_row][riser] = np.append(df[df_row][riser], rep_val)
+            df[df_row][riser] = np.insert(df[df_row][riser], 0, rep_val)
+
+
+# Stacking the 'expected', 'measured', and 'diff' columns from the 'df' dataframe
+nump = {} 
+nump['expected'] = np.stack(df['expected'].values)
+nump['measured'] = np.stack(df['measured'].values)
+nump['diff']     = np.stack(df['diff'].values)
+
+# Plotting a 3-Row subplot based on the values in 'nump'
+fig, axs = plt.subplots(nrows=3, ncols=1, figsize=(9, 6), subplot_kw={'xticks': [], 'yticks': []})
+
+# Iterating through each of the subplots
+for ax, chart in zip(axs.flat, nump):
+    # Get the specified chart from the nump dict and display it 
+    ax.imshow(nump[chart], interpolation='lanczos', cmap='RdYlGn')
+    # Add the title for each chart
+    ax.set_title(str(chart))
+
+plt.show()
