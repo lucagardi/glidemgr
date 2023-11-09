@@ -3,7 +3,7 @@ Stub of a web-based paragliding trim helper, built around bluetooth telemeters
 
 
 # Data structure:
-
+```
 {
   "model": "Kibo",
   "manufacturer": "UP",
@@ -33,3 +33,4 @@ Stub of a web-based paragliding trim helper, built around bluetooth telemeters
   },
   "ST": 300
 }
+```
